@@ -68,9 +68,9 @@ int main(int argc, char *argv[]){
 
 		
 		//construct a CHECK node
-		Node *temp;
-		temp = (Node*) malloc(sizeof(temp));
-		&temp.req_id = previd + 1;
+		Node temp;
+		//temp = (Node*) malloc(sizeof(temp));
+		temp.req_id = previd + 1;
 		gettimeofday(&temp.arrival, NULL);
 		temp.req_type = 0;//0 for check, 1 for trans
 		temp.check_id = atoi(parsed[1]);
@@ -83,10 +83,10 @@ int main(int argc, char *argv[]){
 		previd = previd + 1;
 		
 		//TESTING
-		//Node temp2;
+		Node * temp2;
 		//(Node*) malloc(sizeof(temp2));
-		//temp2 = dequeue();
-		//printf("TEST %d\n", temp2.check_id);
+		temp2 = dequeue();
+		printf("TEST %d\n", temp2->check_id);
 
 		}
 		//----------- Transactions ------------
