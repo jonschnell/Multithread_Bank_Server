@@ -1,4 +1,5 @@
 //Jon Schnell
+//4/6/21
 
 #include "Bank.h"
 #include "Queue.h"
@@ -35,6 +36,8 @@ int main(int argc, char *argv[]){
 	
 	initialize_accounts(numAccounts);
 	
+	init_queue();
+	
 	//---------------------- create threads -------------------
 	pthread_t threads[numWorkers];
 	int thread;
@@ -58,22 +61,20 @@ int main(int argc, char *argv[]){
 		
 		//----------- Balance checks ----------
 		if(strcmp(parsed[0],"CHECK") == 0){
+		//TODO
 		//malloc
 		//enqueue each transaction
 		//mark start time
-		//TODO wrong
 		//printf("ID %d\n", read_account(atoi(parsed[1])));
 		
-		//TODO
 
 		}
 		//----------- Transactions ------------
 		if(strcmp(parsed[0],"TRANS") == 0){
+		//TODO
 		//malloc
 		//enqueue each transaction
 		//write_account(atoi(parsed[1]), atoi(parsed[2]));
-		
-		//TODO
 			//struct request request1;
 			//struct transfer transfer1;
 			
@@ -91,6 +92,7 @@ int main(int argc, char *argv[]){
 		if(strcmp(parsed[0],"EXIT") == 0){
 			printf("Exiting...");
 			free_accounts();
+			mark_queue_as_done();
 			return 0;
 		}
 
