@@ -47,8 +47,8 @@ int main(int argc, char *argv[]){
 	}
 	
 	//----------------------- user input loop ---------------------------
+	int previd = 1;
 	while(1){
-		int previd;
 		// Get user input
 		char input[512];
 		int length = strlen(fgets(input,512,stdin));
@@ -65,8 +65,28 @@ int main(int argc, char *argv[]){
 		//malloc
 		//enqueue each transaction
 		//mark start time
-		//printf("ID %d\n", read_account(atoi(parsed[1])));
+
 		
+		//construct a CHECK node
+		Node *temp;
+		temp = (Node*) malloc(sizeof(temp));
+		&temp.req_id = previd + 1;
+		gettimeofday(&temp.arrival, NULL);
+		temp.req_type = 0;//0 for check, 1 for trans
+		temp.check_id = atoi(parsed[1]);
+		
+		//enqueue
+		enqueue(&temp);
+		
+		//printf("ID %d\n", read_account(atoi(parsed[1])));
+		printf("ID %d\n", previd);
+		previd = previd + 1;
+		
+		//TESTING
+		//Node temp2;
+		//(Node*) malloc(sizeof(temp2));
+		//temp2 = dequeue();
+		//printf("TEST %d\n", temp2.check_id);
 
 		}
 		//----------- Transactions ------------
