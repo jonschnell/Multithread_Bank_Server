@@ -61,32 +61,23 @@ int main(int argc, char *argv[]){
 		
 		//----------- Balance checks ----------
 		if(strcmp(parsed[0],"CHECK") == 0){
-		//TODO
-		//malloc
-		//enqueue each transaction
-		//mark start time
-
 		
 		//construct a CHECK node
-		Node temp;
-		//temp = (Node*) malloc(sizeof(temp));
-		temp.req_id = previd + 1;
-		gettimeofday(&temp.arrival, NULL);
-		temp.req_type = 0;//0 for check, 1 for trans
-		temp.check_id = atoi(parsed[1]);
+		Node * temp;
+		//malloc
+		temp = (Node*) malloc(sizeof(Node));
+		temp->req_id = previd + 1;
+		//mark start time
+		gettimeofday(&temp->arrival, NULL);
+		temp->req_type = 0;//0 for check, 1 for trans
+		temp->check_id = atoi(parsed[1]);
 		
 		//enqueue
-		enqueue(&temp);
+		enqueue(temp);
 		
 		//printf("ID %d\n", read_account(atoi(parsed[1])));
 		printf("ID %d\n", previd);
 		previd = previd + 1;
-		
-		//TESTING
-		Node * temp2;
-		//(Node*) malloc(sizeof(temp2));
-		temp2 = dequeue();
-		printf("TEST %d\n", temp2->check_id);
 
 		}
 		//----------- Transactions ------------
@@ -98,13 +89,37 @@ int main(int argc, char *argv[]){
 			//struct request request1;
 			//struct transfer transfer1;
 			
+		//construct a CHECK node
+		Node * temp;
+		//malloc
+		temp = (Node*) malloc(sizeof(Node));
+		temp->req_id = previd + 1;
+		//mark start time
+		gettimeofday(&temp->arrival, NULL);
+		temp->req_type = 1;//0 for check, 1 for trans
+			
+		
 			int i = 1;
 			while(parsed[i] != NULL){
-				//transfer1.acc_id = atoi(parsed[i]);
-				//transfer1.amount = atoi(parsed[i+1]);
+				Trans * temptrans;
+				temptrans = (Trans*) malloc(sizeof(Trans));
+				temptrans->acc_id = atoi(parsed[i]);
+				temptrans->amount = atoi(parsed[i+1]);
+				temp->trans = temptrans;
+				
 				i = i + 2;
-				//request1.transfers[(i-1)/2] = transfer1;
+				
 			}
+			
+		temp->num_trans = (i-1)/2;
+			
+				
+		//enqueue
+		enqueue(temp);
+			
+		//printf("ID %d\n", read_account(atoi(parsed[1])));
+		printf("ID %d\n", previd);
+		previd = previd + 1;
 			
 		
 		}
@@ -137,6 +152,24 @@ void parse(char input[], char *parsed[]){
 //code to be exicuted by the workers
 void *process(){
 	printf("test\n");
+	//TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTESTING
+	Node * temp2;
+	temp2 = (Node*) malloc(sizeof(temp2));
+	temp2 = dequeue();
+	printf("check id: %d\n", temp2->check_id);
+	printf("numtrans: %d\n", temp2->num_trans);
+	
+	int i = 0;
+	Trans * temptrans;
+	temptrans = (Trans*) malloc(sizeof(Trans));
+	temptrans = temp2->trans;
+	while (i < temp2->num_trans){
+		printf("trans ID: %d\n", temptrans->acc_id);
+		printf("trans A: %d\n", temptrans->amount);
+		
+		i--;
+		temptrans = temptrans
+	}
 	//deque
 	//acquire mutex
 	//write to the account
