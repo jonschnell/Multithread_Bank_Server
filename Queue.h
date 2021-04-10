@@ -2,10 +2,12 @@
 #include <sys/time.h>
 
 //outline provided by Aiman Priester
+//modified by jon schnell
 /* A transaction pair: <acc> <amount>*/
 typedef struct {
 	int acc_id;  /* the account ID */
 	int amount;  /* the amount to be added. Can be positive or negative */
+	//struct Trans *next;
 } Trans;
 
 
@@ -25,7 +27,7 @@ typedef struct Node{
 	
 	/*** For TRANS request ***/
 	int num_trans;
-	Trans *trans;
+	Trans *trans[];
 	/*************************/
 } Node;
 	

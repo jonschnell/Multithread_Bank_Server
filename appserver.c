@@ -13,7 +13,7 @@
 #include <pthread.h>
 
 void parse(char input[], char *parsed[]);
-void *process();
+void *process(void *fp);
 
 
 int main(int argc, char *argv[]){
@@ -30,6 +30,8 @@ int main(int argc, char *argv[]){
 	char outfile[32];
 	strcpy(outfile, argv[3]);
 	
+	FILE *fp = fopen(outfile, "w");
+	
 	//printf("%d\n", numWorkers);
 	//printf("%d\n", numAccounts);
 	//printf("%s\n", outfile);
@@ -43,8 +45,10 @@ int main(int argc, char *argv[]){
 	int thread;
 	
 	for(int i = 0; i < numWorkers; i++){
-		thread = pthread_create(&threads[i], NULL, process, NULL);
+		thread = pthread_create(&threads[i], NULL, process, (void *)fp);
 	}
+	
+	//TODO create account mutexes
 	
 	//----------------------- user input loop ---------------------------
 	int previd = 1;
@@ -82,12 +86,6 @@ int main(int argc, char *argv[]){
 		}
 		//----------- Transactions ------------
 		if(strcmp(parsed[0],"TRANS") == 0){
-		//TODO
-		//malloc
-		//enqueue each transaction
-		//write_account(atoi(parsed[1]), atoi(parsed[2]));
-			//struct request request1;
-			//struct transfer transfer1;
 			
 		//construct a CHECK node
 		Node * temp;
@@ -97,27 +95,30 @@ int main(int argc, char *argv[]){
 		//mark start time
 		gettimeofday(&temp->arrival, NULL);
 		temp->req_type = 1;//0 for check, 1 for trans
-			
+
 		
-			int i = 1;
-			while(parsed[i] != NULL){
-				Trans * temptrans;
-				temptrans = (Trans*) malloc(sizeof(Trans));
-				temptrans->acc_id = atoi(parsed[i]);
-				temptrans->amount = atoi(parsed[i+1]);
-				temp->trans = temptrans;
-				
-				i = i + 2;
-				
-			}
+		int i = 1;
+		int j = 0;
+		//construct array of transactions
+		while(parsed[i] != NULL){
+			Trans * temptrans;
+			temptrans = (Trans*) malloc(sizeof(Trans));
+			temptrans->acc_id = atoi(parsed[i]);
+			temptrans->amount = atoi(parsed[i+1]);
+			temp->trans[j] = temptrans;	
 			
+			//increment
+			i = i + 2;
+			j++;
+		}
+		
+		//set num trans
 		temp->num_trans = (i-1)/2;
-			
 				
 		//enqueue
 		enqueue(temp);
-			
-		//printf("ID %d\n", read_account(atoi(parsed[1])));
+		
+		//print transaction ID the increment it
 		printf("ID %d\n", previd);
 		previd = previd + 1;
 			
@@ -126,6 +127,8 @@ int main(int argc, char *argv[]){
 		//----------- Exit --------------------
 		if(strcmp(parsed[0],"EXIT") == 0){
 			printf("Exiting...");
+			sleep(1);
+			fclose(fp);
 			free_accounts();
 			mark_queue_as_done();
 			return 0;
@@ -150,10 +153,58 @@ void parse(char input[], char *parsed[]){
 }
 
 //code to be exicuted by the workers
-void *process(){
-	printf("test\n");
-	//TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTESTING
+void *process(void *fp){
+
+	//deque
 	Node * temp2;
+	temp2 = (Node*) malloc(sizeof(temp2));
+	temp2 = dequeue();
+	
+	//FILE *fp;
+	struct timeval time;
+	
+	//request is of type ------------ CHECK --------------
+	if (temp2->req_type == 0){
+		gettimeofday(&time, NULL);
+		fprintf(fp, "%d BAL %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, read_account(temp2->check_id), temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+	}
+	
+	//request is of type ------------- TRANS --------------
+	if (temp2->req_type == 1){
+		
+		//write to the accounts
+		int i = 0;
+		Trans * temptrans;
+		temptrans = (Trans*) malloc(sizeof(Trans));
+	
+		while (i < temp2->num_trans){
+			temptrans = temp2->trans[i];
+			//printf("trans ID: %d\n", temptrans->acc_id);
+			//printf("trans A: %d\n", temptrans->amount);
+			
+			//check for ISF
+			if (temptrans->amount + read_account(temptrans->acc_id) < 0){
+				gettimeofday(&time, NULL);
+				fprintf(fp, "%d ISF %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temptrans->acc_id, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+			}
+			else{
+				write_account(temptrans->acc_id, temptrans->amount + read_account(temptrans->acc_id));
+				//printf("test: %d\n", read_account(1));
+				gettimeofday(&time, NULL);
+				fprintf(fp, "%d OK TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+			}
+			i++;
+		}
+		
+	//mark finish time
+	//write to file
+	
+	
+	}
+
+	
+	//------------- TESTING ----------------
+	/*Node * temp2;
 	temp2 = (Node*) malloc(sizeof(temp2));
 	temp2 = dequeue();
 	printf("check id: %d\n", temp2->check_id);
@@ -162,19 +213,14 @@ void *process(){
 	int i = 0;
 	Trans * temptrans;
 	temptrans = (Trans*) malloc(sizeof(Trans));
-	temptrans = temp2->trans;
+
 	while (i < temp2->num_trans){
+		temptrans = temp2->trans[i];
 		printf("trans ID: %d\n", temptrans->acc_id);
 		printf("trans A: %d\n", temptrans->amount);
 		
-		i--;
-		temptrans = temptrans
-	}
-	//deque
-	//acquire mutex
-	//write to the account
-	//mark finish time
-	//write to file
-	//release mutex
-//loop
+		i++;
+		//temptrans = temptrans
+	}*/
+
 }
