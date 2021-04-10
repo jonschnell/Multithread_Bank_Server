@@ -27,7 +27,7 @@ typedef struct Node{
 	
 	/*** For TRANS request ***/
 	int num_trans;
-	Trans *trans[];
+	Trans *trans[32];
 	/*************************/
 } Node;
 	

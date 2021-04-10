@@ -176,28 +176,33 @@ void *process(void *fp){
 		int i = 0;
 		Trans * temptrans;
 		temptrans = (Trans*) malloc(sizeof(Trans));
-	
+		bool isf = false;
+		
+		//check for ISF
 		while (i < temp2->num_trans){
 			temptrans = temp2->trans[i];
-			//printf("trans ID: %d\n", temptrans->acc_id);
-			//printf("trans A: %d\n", temptrans->amount);
-			
-			//check for ISF
 			if (temptrans->amount + read_account(temptrans->acc_id) < 0){
-				gettimeofday(&time, NULL);
-				fprintf(fp, "%d ISF %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temptrans->acc_id, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
-			}
-			else{
-				write_account(temptrans->acc_id, temptrans->amount + read_account(temptrans->acc_id));
-				//printf("test: %d\n", read_account(1));
-				gettimeofday(&time, NULL);
-				fprintf(fp, "%d OK TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+				isf = true;
 			}
 			i++;
 		}
+		i = 0;
 		
-	//mark finish time
-	//write to file
+		if (isf == true){
+			gettimeofday(&time, NULL);
+			fprintf(fp, "%d ISF %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temptrans->acc_id, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+		}
+		else{
+			//write the transactions to each acocunt
+			while (i < temp2->num_trans){
+				temptrans = temp2->trans[i];
+				write_account(temptrans->acc_id, temptrans->amount + read_account(temptrans->acc_id));
+				
+				i++;
+			}
+			gettimeofday(&time, NULL);
+			fprintf(fp, "%d OK TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+		}
 	
 	
 	}
