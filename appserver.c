@@ -14,7 +14,7 @@
 
 void parse(char input[], char *parsed[]);
 void *process(void *fp);
-
+pthread_mutex_t accmutex[10000];
 
 int main(int argc, char *argv[]){
 
@@ -40,12 +40,19 @@ int main(int argc, char *argv[]){
 	
 	init_queue();
 	
+	//---------------------- create account mutexes -------------------
+	//pthread_mutex_t accmutex[numAccounts];
+	for(int i = 0; i < numAccounts; i++){
+		pthread_mutex_init(&accmutex[i], NULL);
+	}
+	
 	//---------------------- create threads -------------------
 	pthread_t threads[numWorkers];
 	int thread;
 	
 	for(int i = 0; i < numWorkers; i++){
 		thread = pthread_create(&threads[i], NULL, process, (void *)fp);
+		pthread_mutex_init(&accmutex[i], NULL);
 	}
 	
 	//TODO create account mutexes
@@ -176,28 +183,30 @@ void *process(void *fp){
 		int i = 0;
 		Trans * temptrans;
 		temptrans = (Trans*) malloc(sizeof(Trans));
-		bool isf = false;
 		
 		//check for ISF
+		bool isf = false;
+		int isfacc;
 		while (i < temp2->num_trans){
 			temptrans = temp2->trans[i];
 			if (temptrans->amount + read_account(temptrans->acc_id) < 0){
 				isf = true;
+				isfacc = temptrans->acc_id;
 			}
 			i++;
 		}
-		i = 0;
-		
 		if (isf == true){
 			gettimeofday(&time, NULL);
-			fprintf(fp, "%d ISF %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temptrans->acc_id, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+			fprintf(fp, "%d ISF %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, isfacc, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
 		}
 		else{
 			//write the transactions to each acocunt
+			i = 0;
 			while (i < temp2->num_trans){
 				temptrans = temp2->trans[i];
+				pthread_mutex_lock(&accmutex[temptrans->acc_id]);
 				write_account(temptrans->acc_id, temptrans->amount + read_account(temptrans->acc_id));
-				
+				pthread_mutex_unlock(&accmutex[temptrans->acc_id]);
 				i++;
 			}
 			gettimeofday(&time, NULL);
