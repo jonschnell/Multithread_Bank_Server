@@ -89,6 +89,9 @@ int main(int argc, char *argv[]){
 		//printf("ID %d\n", read_account(atoi(parsed[1])));
 		printf("ID %d\n", previd);
 		previd = previd + 1;
+		
+		//free temp node
+		//free(temp);
 
 		}
 		//----------- Transactions ------------
@@ -128,7 +131,9 @@ int main(int argc, char *argv[]){
 		//print transaction ID the increment it
 		printf("ID %d\n", previd);
 		previd = previd + 1;
-			
+		
+		//free temp node
+		//free(temp);	
 		
 		}
 		//----------- Exit --------------------
@@ -164,7 +169,7 @@ void *process(void *fp){
 
 	//deque
 	Node * temp2;
-	temp2 = (Node*) malloc(sizeof(temp2));
+	temp2 = (Node*) malloc(sizeof(Node));
 	temp2 = dequeue();
 	
 	//FILE *fp;
@@ -174,6 +179,9 @@ void *process(void *fp){
 	if (temp2->req_type == 0){
 		gettimeofday(&time, NULL);
 		fprintf(fp, "%d BAL %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, read_account(temp2->check_id), temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+		
+		//free temp node
+		free(temp2);
 	}
 	
 	//request is of type ------------- TRANS --------------
@@ -200,17 +208,38 @@ void *process(void *fp){
 			fprintf(fp, "%d ISF %d TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, isfacc, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
 		}
 		else{
+			//order transactiosn in ascending account numbers
+			for (i = 0; i < temp2->num_trans; ++i){
+				for (int j = i + 1; j < temp2->num_trans; ++j){
+					Trans * temptransI = temp2->trans[i];
+					Trans * temptransJ = temp2->trans[j];
+					if (temp2->trans[i]->acc_id > temp2->trans[j]->acc_id){
+						Trans * swap = temptransI;
+						temp2->trans[i] = temptransJ;
+						temp2->trans[j] = swap;
+					}
+				}
+			}
+			
 			//write the transactions to each acocunt
 			i = 0;
 			while (i < temp2->num_trans){
 				temptrans = temp2->trans[i];
-				pthread_mutex_lock(&accmutex[temptrans->acc_id]);
+				//lock acc mutex
+				pthread_mutex_lock(&accmutex[temptrans->acc_id-1]);
+				//write to acc
 				write_account(temptrans->acc_id, temptrans->amount + read_account(temptrans->acc_id));
-				pthread_mutex_unlock(&accmutex[temptrans->acc_id]);
+				//unlock acc mutex
+				pthread_mutex_unlock(&accmutex[temptrans->acc_id-1]);
 				i++;
 			}
 			gettimeofday(&time, NULL);
 			fprintf(fp, "%d OK TIME %ld.%06ld %ld.%06ld\n", temp2->req_id-1, temp2->arrival.tv_sec, temp2->arrival.tv_usec, time.tv_sec, time.tv_usec);
+			
+			//free temp node
+			free(temp2);
+			//free temp trans
+			free(temptrans);
 		}
 	
 	
